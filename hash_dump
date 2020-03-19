@@ -1,7 +1,7 @@
 #!/usr/bin/python
 import re,sys
 salt_patt=r'\$\d\$(.*)\$'
-user_name_patt=r'([a-z]*):\$'
+user_name_patt=r'(.*):\$'
 hsh_patt=r'\$\d\$.*\$(.*):'
 hsh_patt1=r':\d*:\d*:.*:'
 algo_patt=r'\$(\d)\$'
