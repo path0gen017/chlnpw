@@ -1,0 +1,13 @@
+{ 
+    "0":"Program executed successfully",
+    "1":"Shadow file not found",
+    "2":"Path does not exist",
+    "3":"No read permission",
+    "4":"user_dump.py script not found",
+    "5":"hash_dump.py script not found",
+    "6":"Invalid algorithm name",
+    "7":"Invalid or no algorithm provided",
+    "8":"has_write.py not found",
+    "9":"No write permission",
+    "10":"Username not found"
+}

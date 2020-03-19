@@ -1,0 +1,34 @@
+#!/usr/bin/python
+import re,sys
+salt_patt=r'\$\d\$(.*)\$'
+user_name_patt=r'([a-z]*):\$'
+hsh_patt=r'\$\d\$.*\$(.*):'
+hsh_patt1=r':\d*:\d*:.*:'
+algo_patt=r'\$(\d)\$'
+path=sys.argv[1]
+
+_file=open(path,'r')
+lines=_file.readlines()
+_file.close()
+
+print("%-16s%-24s%-20s%80s"%("User-name","Salt","Hash","Algorithm"))
+for line in lines:
+    salt_match=re.search(salt_patt,line)
+    hash_match=re.search(hsh_patt,line)
+    name_match=re.search(user_name_patt,line)
+    algo_match=re.search(algo_patt,line)
+    if name_match==None:continue
+    new_line=hash_match.group(1)
+    end_part=re.search(hsh_patt1,new_line)
+    if algo_match.group(1)=='1':algorithm='md5'
+    elif algo_match.group(1)=='5':algorithm='sha-256'
+    else:algorithm='sha-512'
+
+    name=name_match.group(1)
+    salt=salt_match.group(1)
+    _hash=new_line[0:(len(new_line)-len(end_part.group()))]
+    print("%-16s%-24s%-91s%s"%(name,salt,_hash,algorithm))
+sys.exit(0)
+    
+    
+    

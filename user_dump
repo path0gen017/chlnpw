@@ -1,0 +1,15 @@
+#!/usr/bin/python
+#Author:pAth0gen017
+#Description:This module dumps the usernames in the shadow file onto the screen
+
+import re,sys
+path=sys.argv[1]
+_file=open(path,'r')
+pattern=r'[a-z]*:\$'
+lines=_file.readlines()
+for line in lines:
+    match=re.search(pattern,line)
+    if match==None:continue
+    print(match.group().rstrip(':$'))
+sys.exit(0)
+    

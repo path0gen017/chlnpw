@@ -1,0 +1,39 @@
+#!/usr/bin/python
+#Author:pAth0gen017
+#Date:18-02-2020
+#Description:This module does the actual writing of the changed passwords to the shadow file
+import re,sys
+path=sys.argv[1]
+usr_name=sys.argv[2]
+new_hash=sys.argv[3]
+usr_name_status=0
+hsh_patt=r'\$\d\$.*\$(.*):'
+hsh_patt1=r':\d*:\d*:.*:'
+_file=open(path,'r')
+lines=_file.readlines()
+_file.close()
+for line in lines:
+    hash_match=re.search(hsh_patt,line)
+    if hash_match==None:continue
+    new_line=hash_match.group(1)
+    end_part=re.search(hsh_patt1,new_line)
+    _hash=new_line[0:(len(new_line)-len(end_part.group()))]
+    hash_replace_match=re.search(usr_name+':\$\d\$(.*)\$'+_hash,line)
+    if hash_replace_match:
+        usr_name_status=1
+        hash_replace=hash_replace_match.group().lstrip(usr_name+':')
+        _file=open(path,'r')
+        temp_var=_file.read()
+        temp_var=temp_var.replace(hash_replace,new_hash)
+        _file.close()
+        _file=open(path,'w')
+        _file.write(temp_var)
+        _file.close()
+        del temp_var
+        print("Password changed successfully!!")
+        sys.exit(0)
+
+if usr_name_status==0:
+    print("Error:Cannot find the username in the specified shadow file.\nIf you not sure of the usernames in the shadow file kindly run the command with the -l option first")
+    sys.exit(10)
+

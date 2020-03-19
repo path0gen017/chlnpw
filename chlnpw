@@ -1,0 +1,230 @@
+#!/bin/bash
+#Author:pAth0gen017
+#Date:17-02-2020
+#Description:This script enables one to read and modify the shadow file
+optstrings=hvbwlp: ##d for dumping hashes;l for listing usernames;p for path;w for writing to the file
+helpvar=0
+verb=0
+userdmp=0
+hashdump=0
+path_status=0
+write_status=0
+algo_status=0
+backup_status=0
+exit_status=0
+
+
+while getopts $optstrings opt
+do
+
+
+case $opt in
+*h*)
+helpvar=1
+;;
+
+*p*)
+path=$OPTARG
+if [ -e "$path" ] #This if checks whether the path given is valid
+then
+if [ -d "$path" ] #This if then checks whether the path given is a directory.If it is then "shadow" is appended to its end to form a complete path 
+then
+path="$path/shadow"
+if [ -e "$path" ]
+then
+path_status=1
+else
+printf "The shadow file was not found in the directory given\n"
+exit 1
+fi
+fi
+path_status=1
+else
+printf "Path does not exist:$path.\n" #If the path is invalid then quit the program
+exit 2
+fi
+;;
+
+*l*)
+userdmp=1
+;;
+
+*v*)
+verb=1
+;;
+
+*w*)
+write_status=1
+;;
+
+*b*)
+backup_status=1
+;;
+esac
+done
+
+if [ "$helpvar" -eq 1 ] || [ "$#" -eq 0 ]
+then
+printf "\t\t\t\t\t%s\n%b%s\n" "CHLNPW" "A Software utility that enables one to quickly view the entries in the shadow file and make changes at his/her own will\nFeel free to use and modify it as you please\n"
+printf "%s\n" "USAGE: (./)chlnpw [OPTIONS AND THEIR ARGS] [username] [password] [algorithm] [salt]"
+printf "%s\n" "EXAMPLE:./chlnpw -lvp ///etc/shadow"
+printf "%b%s" "OPTIONS:\n
+      -h help Display this help information
+      -b Creates a backup copy of the password-containing file in the same directory as this script
+      -p path=[ARGUMENT] ARGUMENT should be the path to the shadow file.Note the default path is the path to the host's shadow file
+      If only a directory is given in the path,then the default filename is shadow.However you can overwrite this by giving the full path including the filename
+      -l dump the usernames in the shadow file onto the screen.Include the -v options for more information such as the algorithm used,the hash e.t.c
+      -v To toggle verbosity
+      -w This option must be there if you want the [password] to be written to the file.Note if no salt is given then one is generated randomly
+
+Please Note that the arguments listed above should be following one another as indicated.
+Also the [username] should be valid.If you dont know the usernames present in the shadow file,I advise that you run the script with the -l option first
+The algorithms currently supported are sha-256(sha256crypt) sha-512(sha512crypt) and md5
+Please do not enter any other algorithm as the program will not work"
+fi
+
+if [ $backup_status -eq 1 ]
+then
+cp $path $PWD
+printf "%s\n" "A Backup copy of the file has been successfully created in the same directory as this script"
+fi
+
+if [ "$userdmp" -eq 1 ] && [ "$verb" -eq 0 ] #This if tests if the -l options has been given in the commandline
+then
+if [ "$path_status" -eq 1 ] #This one tests if the user has given a path to this script.Note there is no default path and therefore the user has to supply one tp the program
+then
+if [ -f user_dump ] #This if statement tests whether both the user_dump and the chlnpw.sh scripts are in the same directory.Note a critical condition for this program to work
+then
+
+if [ -r $path ]
+then
+printf "%s\n" "The usernames in the shadow file are:" #This portion invokes the use of user_dump which is a .py script.
+./user_dump $path
+exit_status=$?
+else
+printf "%s\n" "You currently don't have read permission to that file.Kindly run the script as root or use the sudo command"
+exit 3
+fi
+
+else
+printf "%s\n" "user_dump script was not found in this directory.Please ensure that the user_dump script and the chlnpw.sh script are in the same directory"
+exit 4
+fi
+else
+printf "%s\n" "Cannot list usernames:No path was given"
+exit 2
+fi
+fi
+
+if [ "$userdmp" -eq 1 ] && [ "$verb" -eq 1 ] #This if tests if the -l and -v options has been given in the commandline
+then
+if [ "$path_status" -eq 1 ] #This one tests if the user has given a path to this script.Note there is no default path and therefore the user has to supply one tp the program
+then
+if [ -f hash_dump ] #This if statement tests whether both the user_dump and the chlnpw.sh scripts are in the same directory.Note this is a critical condition for this program to work
+then
+if [ -r $path ]
+then
+printf "%s\n" "The usernames in the shadow file are:" #This portion invokes the use of user_dump which is a .py script.
+./hash_dump $path
+exit_status=$?
+else
+printf "%s\n" "You currently don't have read permission to that file.Kindly run the script as root or use the sudo command"
+exit 3
+fi
+else
+printf "%s\n" "hash_dump script was not found in this directory.Please ensure that the hash_dump script and the chlnpw.sh script are in the same directory"
+exit 5
+fi
+else
+printf "%s\n" "Cannot list usernames:No path was given"
+exit 2
+fi
+fi
+
+shift "$(( $OPTIND - 1  ))"
+
+########Main block
+if [ "$write_status" -eq 1 ]
+then
+case "$3" in
+"sha256"*)
+printf "%s\n" "Invalid algorithm name provided.Try sha-256 or sha256crypt"
+exit 6
+;;
+"sha512"*)
+printf "%s\n" "Invalid algorithm name provided.Try sha-512 or sha512crypt"
+exit 6
+;;
+esac
+case "$3" in
+"sha-512" | "sha512crypt"*) algo_status=1;;
+"sha-256" | "sha256crypt"*) algo_status=1;;
+"md5" | "md5crypt"*) algo_status=1;;
+esac
+#####Very small block
+if [ "$algo_status" -eq 0 ]
+then
+printf "Invalid or no hashing algorithm provided.Try the -h option for information on accepted algorithms\n"
+exit 7
+fi
+######Very small block
+
+######inner block 4
+if [ -n "$4" ]
+then
+########Inner block 2
+if [ "$3" = "sha-512" ] || [ "$3" = "sha-256" ]
+then
+####inner block1
+if [ "${#4}" -ge 8 ] && [ "${#4}" -le 16 ]
+then
+_hash=$( mkpasswd -m $3 -S $4 $2 )
+else
+printf "%b%s" "The hash does not meet the required length which is between 8 and 16 bytes.\n"
+printf "%b%s" "Generating and using one automatically....\n"
+_hash=$( mkpasswd -m $3 $2 )
+fi
+####inner block1
+else
+##########inner block 3
+if [ "${#4}" != 8 ]
+then
+printf "%s\n" "The Hash does not meet the required lenth which is strictly 8 bytes for md5."
+printf "%b%s" "Generating and using one automatically....\n"
+_hash=$( mkpasswd -m $3 $2 )
+else
+_hash=$( mkpasswd -m $3 -S $4 $2 )
+fi
+########inner block 3
+fi
+#########inner block 2
+else
+printf "%b%s\n" "No salt has been detected.\nGenerating and using one randomly.........."
+_hash=$( mkpasswd -m $3 $2 )
+fi
+#########inner block 4
+########inner block 5
+if [ -w $path ]
+then
+
+if [ -f hash_write ]
+then
+./hash_write $path $1 $_hash
+exit_status=$?
+else
+printf "%s\n" "The hash_write script could not be found.Kindly ensure that both the hash_write and chlnpw scripts are in the same directory"
+exit 8
+fi
+
+else
+printf "%s\n" "You have no write permissions to the file.Please run this script as root or using the sudo command"
+exit 9
+fi
+########inner block 5
+fi
+########Main block
+
+exit $exit_status
+
+
+
