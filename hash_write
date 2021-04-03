@@ -2,16 +2,26 @@
 #Author:pAth0gen017
 #Date:18-02-2020
 #Description:This module does the actual writing of the changed passwords to the shadow file
+
+
 import re,sys
+
+
 path=sys.argv[1]
 usr_name=sys.argv[2]
 new_hash=sys.argv[3]
 usr_name_status=0
+
+
 hsh_patt=r'\$\d\$.*\$(.*):'
 hsh_patt1=r':\d*:\d*:.*:'
-_file=open(path,'r')
+
+
+_file=open(path)
 lines=_file.readlines()
 _file.close()
+
+
 for line in lines:
     hash_match=re.search(hsh_patt,line)
     if hash_match==None:continue
